@@ -1,5 +1,5 @@
 export const colors = {
   headerBackground: "#3781d6",
-  headerText: "#000000",
+  headerText: "#ffffff",
   screenBackground: "#ffffff",
 };

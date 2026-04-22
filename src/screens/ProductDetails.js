@@ -9,6 +9,7 @@ import {
 import { getProductDetails } from "../services/api";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
+import BackButton from "../components/BackButton";
 
 export default function ProductDetails({ route, navigation }) {
   const { productId } = route.params;
@@ -50,7 +51,8 @@ export default function ProductDetails({ route, navigation }) {
         <Text style={styles.description}>{product.description}</Text>
 
         <View style={styles.buttonSpacing}>
-          <Button title="Back" onPress={() => navigation.goBack()} />
+          <BackButton title="Back" onPress={() => navigation.goBack()} 
+            style={{ alignSelf: "flex-start", marginTop: 20}}/>
         </View>
 
         <Button title="Add to Shopping Cart" onPress={() => {}} />
