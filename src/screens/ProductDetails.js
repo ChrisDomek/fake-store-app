@@ -7,6 +7,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { getProductDetails } from "../services/api";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "../components/Header";
 
 export default function ProductDetails({ route, navigation }) {
   const { productId } = route.params;
@@ -31,25 +33,29 @@ export default function ProductDetails({ route, navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
         <Text>Loading product details...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{product.title}</Text>
-      <Text style={styles.price}>${product.price}</Text>
-      <Text style={styles.description}>{product.description}</Text>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Header title="Product Details" />
 
-      <View style={styles.buttonSpacing}>
-        <Button title="Back" onPress={() => navigation.goBack()} />
+      <View style={styles.container}>
+        <Text style={styles.title}>{product.title}</Text>
+        <Text style={styles.price}>${product.price}</Text>
+        <Text style={styles.description}>{product.description}</Text>
+
+        <View style={styles.buttonSpacing}>
+          <Button title="Back" onPress={() => navigation.goBack()} />
+        </View>
+
+        <Button title="Add to Shopping Cart" onPress={() => {}} />
       </View>
-
-      <Button title="Add to Shopping Cart" onPress={() => {}} />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, ScrollView, TouchableOpacity, Button, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  TouchableOpacity,
+  Button,
+  StyleSheet,
+} from "react-native";
 import { getProductsByCategory } from "../services/api";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Header from "../components/Header";
 
 export default function ProductListScreen({ route, navigation }) {
   const { category } = route.params;
@@ -8,16 +18,16 @@ export default function ProductListScreen({ route, navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-const getProductsData = async () => {
-  try {
-    const data = await getProductsByCategory(category);
-    setProducts(data);
-  } catch (error) {
-    console.log(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  const getProductsData = async () => {
+    try {
+      const data = await getProductsByCategory(category);
+      setProducts(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     getProductsData();
@@ -25,31 +35,38 @@ const getProductsData = async () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
         <Text>Loading products...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Product List Screen</Text>
-      <Text style={styles.subtitle}>Category: {category}</Text>
-      <Button title="Back" onPress={() => navigation.goBack()} />
+    <SafeAreaView style={{ flex: 1 }}>
+      <Header title="Products" />
 
-      {products.map((product) => (
-        <TouchableOpacity
-          key={product.id}
-          style={styles.productButton}
-          onPress={() =>
-            navigation.navigate("Product Details", { productId: product.id })
-          }
-        >
-          <Text style={styles.productText}>{product.title}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+      <ScrollView style={styles.container}>
+        <Text style={styles.subtitle}>Category: {category}</Text>
+
+        <Button
+          title="Back to Categories"
+          onPress={() => navigation.goBack()}
+        />
+
+        {products.map((product) => (
+          <TouchableOpacity
+            key={product.id}
+            style={styles.productButton}
+            onPress={() =>
+              navigation.navigate("Product Details", { productId: product.id })
+            }
+          >
+            <Text style={styles.productText}>{product.title}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

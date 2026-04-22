@@ -5,7 +5,7 @@ export const getCategories = async () => {
 
 export const getProductsByCategory = async (category) => {
   const response = await fetch(
-    `https://fakestoreapi.com/products/category/${category}`
+    `https://fakestoreapi.com/products/category/${category}`,
   );
   return await response.json();
 };
