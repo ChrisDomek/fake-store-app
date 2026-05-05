@@ -13,9 +13,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { Ionicons } from "@expo/vector-icons";
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/cartSlice";
 
 export default function ProductDetails({ route, navigation }) {
   const { productId } = route.params;
+  const dispatch = useDispatch();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +69,10 @@ export default function ProductDetails({ route, navigation }) {
         </View>
         <View style={styles.buttonRow}>
           <BackButton onPress={() => navigation.goBack()} />
-          <TouchableOpacity style={styles.cartButton}>
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => dispatch(addToCart(product))}
+          >
             <View style={styles.cartContent}>
               <Ionicons name="cart" size={20} color="white" />
               <Text style={styles.cartText}>Add to Cart</Text>
