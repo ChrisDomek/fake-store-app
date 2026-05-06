@@ -1,8 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector, useDispatch } from "react-redux";
 import { increaseQuantity, decreaseQuantity } from "../redux/cartSlice";
-
+import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/Header";
 
 export default function ShoppingCartScreen() {
@@ -20,42 +27,71 @@ export default function ShoppingCartScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Header title="Shopping Cart" />
-
       <View style={styles.container}>
         {cartItems.length === 0 ? (
-          <Text style={styles.emptyText}>Your shopping cart is empty</Text>
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Your shopping cart is empty!</Text>
+          </View>
         ) : (
-          <View>
+          <View style={styles.cartContent}>
             <View style={styles.summaryBox}>
               <Text style={styles.summaryText}>Total Items: {totalItems}</Text>
               <Text style={styles.summaryText}>
                 Total Cost: ${totalCost.toFixed(2)}
               </Text>
             </View>
-
-            {cartItems.map((item) => (
-              <View key={item.id} style={styles.cartItem}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <View style={styles.quantityRow}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => dispatch(decreaseQuantity(item.id))}
-                  >
-                    <Text style={styles.quantityText}>-</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => dispatch(increaseQuantity(item.id))}
-                  >
-                    <Text style={styles.quantityText}>+</Text>
-                  </TouchableOpacity>
+            <FlatList
+              style={styles.cartList}
+              data={cartItems}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.cartListContent}
+              renderItem={({ item }) => (
+                <View style={styles.cartItem}>
+                  <View style={styles.itemRow}>
+                    <Image
+                      source={{ uri: item.image }}
+                      style={styles.itemImage}
+                    />
+                    <View style={styles.itemInfo}>
+                      <Text style={styles.itemTitle} numberOfLines={2}>
+                        {item.title}
+                      </Text>
+                      <Text>
+                        Price: ${(item.price * item.quantity).toFixed(2)}
+                      </Text>
+                      <View style={styles.quantityRow}>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => dispatch(decreaseQuantity(item.id))}
+                        >
+                          <Text style={styles.quantityText}>-</Text>
+                        </TouchableOpacity>
+                        <Text style={styles.quantity}>
+                          Qty: {item.quantity}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.quantityButton}
+                          onPress={() => dispatch(increaseQuantity(item.id))}
+                        >
+                          <Text style={styles.quantityText}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            ))}
+              )}
+            />
           </View>
         )}
       </View>
+      {cartItems.length > 0 && (
+        <TouchableOpacity style={styles.checkoutButton}>
+          <View style={styles.checkoutContent}>
+            <Ionicons name="bag-check" size={22} color="white" />
+            <Text style={styles.checkoutText}>Checkout</Text>
+          </View>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -70,11 +106,16 @@ const styles = StyleSheet.create({
     borderColor: "#000",
     borderRadius: 10,
     backgroundColor: "#fff",
+    overflow: "hidden",
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 28,
     textAlign: "center",
-    marginTop: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   cartItem: {
     borderWidth: 2,
@@ -119,10 +160,53 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
-
   summaryText: {
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  cartListContent: {
+    paddingBottom: 80,
+  },
+  cartContent: {
+    flex: 1,
+  },
+  cartList: {
+    //maxHeight: "75%",
+    flex: 1,
+  },
+  itemRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    resizeMode: "contain",
+  },
+  itemInfo: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  checkoutButton: {
+    backgroundColor: "#429ffc",
+    borderWidth: 2,
+    borderColor: "#000",
+    borderRadius: 10,
+    alignItems: "center",
+    paddingVertical: 10,
+    width: "50%",
+    marginTop: 20,
+    alignSelf: "center",
+  },
+  checkoutText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  checkoutContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 });
