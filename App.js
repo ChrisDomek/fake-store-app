@@ -8,9 +8,14 @@ import CategoryScreen from "./src/screens/CategoryScreen";
 import ProductListScreen from "./src/screens/ProductListScreen";
 import ProductDetails from "./src/screens/ProductDetails";
 import ShoppingCartScreen from "./src/screens/ShoppingCartScreen";
+import AuthScreen from "./src/screens/AuthScreen";
+import UserProfileScreen from "./src/screens/UserProfileScreen";
+import SplashScreen from "./src/screens/SplashScreen";
 
 import { Provider, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 import { store } from "./src/redux/store";
+import { Alert } from "react-native";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -30,12 +35,20 @@ function ProductStack() {
 
 function Tabs() {
   const cartItems = useSelector((state) => state.cart.items);
+  const user = useSelector((state) => state.auth.user);
   const totalItems = cartItems.reduce((total, item) => {
     return total + item.quantity;
   }, 0);
+  function protectedTabPress(e) {
+    if (!user) {
+      e.preventDefault();
+      Alert.alert("Not Logged in", "You must be logged in to access this tab.");
+    }
+  }
 
   return (
     <Tab.Navigator
+      initialRouteName={user ? "User Profile" : "Sign In"}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
@@ -49,12 +62,34 @@ function Tabs() {
         },
       })}
     >
-      <Tab.Screen name="Products" component={ProductStack} />
+      <Tab.Screen
+        name="Products"
+        component={ProductStack}
+        listeners={{
+          tabPress: protectedTabPress,
+        }}
+      />
       <Tab.Screen
         name="Shopping Cart"
         component={ShoppingCartScreen}
+        listeners={{
+          tabPress: protectedTabPress,
+        }}
         options={{
           tabBarBadge: totalItems > 0 ? totalItems : undefined,
+        }}
+      />
+      <Tab.Screen
+        name={user ? "User Profile" : "Sign In"}
+        component={user ? UserProfileScreen : AuthScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name={user ? "person" : "log-in"}
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -62,10 +97,19 @@ function Tabs() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSplash(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
+  
   return (
     <Provider store={store}>
       <NavigationContainer>
-        <Tabs />
+        {showSplash ? <SplashScreen /> : <Tabs />}
       </NavigationContainer>
     </Provider>
   );
