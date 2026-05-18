@@ -10,6 +10,9 @@ import {
 
 import { useDispatch } from "react-redux";
 import { signInUser } from "../redux/authSlice";
+import { signInUserAPI, signUpUserAPI } from "../services/authApi";
+import { getCartAPI } from "../services/cartApi";
+import { setCart } from "../redux/cartSlice";
 
 export default function AuthScreen() {
   const dispatch = useDispatch();
@@ -26,8 +29,7 @@ export default function AuthScreen() {
     setPassword("");
   }
 
-  function handleSubmit() {
-
+  async function handleSubmit() {
     if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
@@ -38,18 +40,52 @@ export default function AuthScreen() {
       return;
     }
 
-    const fakeUser = {
-      id: 1,
-      name: name || "Test User",
-      email,
-    };
+    try {
+      let data;
 
-    dispatch(signInUser(fakeUser));
-    Alert.alert(
-      "Success",
-      isSignUp ? "Account created." : "Signed in successfully.",
-    );
-    clearFields();
+      if (isSignUp) {
+        data = await signUpUserAPI(name, email, password);
+      } else {
+        data = await signInUserAPI(email, password);
+      }
+
+      if (data.error || data.message?.toLowerCase().includes("error")) {
+        Alert.alert("Error", data.message || "Something went wrong.");
+        return;
+      }
+
+      if (!data.token || !data.id || !data.email) {
+        Alert.alert("Error", data.message || "Invalid server response.");
+        return;
+      }
+
+      dispatch(signInUser(data));
+
+      try {
+        const cartData = await getCartAPI(data.token);
+
+        // console.log("CART RESPONSE:", cartData);
+
+        if (cartData.items) {
+          dispatch(setCart(cartData.items));
+        }
+      } catch (cartError) {
+        //console.log("Cart fetch failed:", cartError);
+        dispatch(setCart([]));
+      }
+
+      Alert.alert(
+        "Success",
+        isSignUp ? "Account created successfully." : "Signed in successfully.",
+      );
+
+      clearFields();
+    } catch (error) {
+      Alert.alert(
+        "Connection Error",
+        "Could not connect to the Fake Store API Server.",
+      );
+    }
   }
 
   return (

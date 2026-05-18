@@ -48,7 +48,7 @@ function Tabs() {
 
   return (
     <Tab.Navigator
-      initialRouteName={user ? "User Profile" : "Sign In"}
+      initialRouteName="Account"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
@@ -80,9 +80,10 @@ function Tabs() {
         }}
       />
       <Tab.Screen
-        name={user ? "User Profile" : "Sign In"}
+        name="Account"
         component={user ? UserProfileScreen : AuthScreen}
         options={{
+          tabBarLabel: user ? "Profile" : "Sign In",
           tabBarIcon: ({ color, size }) => (
             <Ionicons
               name={user ? "person" : "log-in"}

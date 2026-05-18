@@ -11,6 +11,7 @@ export default function UserProfileScreen() {
   function handleSignOut() {
     dispatch(signOutUser());
     dispatch(clearCart());
+
     Alert.alert("Signed Out", "You have been signed out.");
   }
 

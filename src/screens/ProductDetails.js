@@ -3,7 +3,7 @@ import {
   View,
   Text,
   ActivityIndicator,
-  Button,
+  Alert,
   StyleSheet,
   Image,
   TouchableOpacity,
@@ -13,13 +13,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Header from "../components/Header";
 import BackButton from "../components/BackButton";
 import { Ionicons } from "@expo/vector-icons";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../redux/cartSlice";
+import { updateCartAPI } from "../services/cartApi";
 
 export default function ProductDetails({ route, navigation }) {
   const { productId } = route.params;
   const dispatch = useDispatch();
-
+  const cartItems = useSelector((state) => state.cart.items);
+  const token = useSelector((state) => state.auth.token);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -47,6 +49,30 @@ export default function ProductDetails({ route, navigation }) {
     );
   }
 
+  async function handleAddToCart() {
+    const existingItem = cartItems.find((item) => item.id === product.id);
+
+    let updatedCart;
+    if (existingItem) {
+      updatedCart = cartItems.map((item) =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+    } else {
+      updatedCart = [...cartItems, { ...product, quantity: 1 }];
+    }
+
+    dispatch(addToCart(product));
+    try {
+      const cartResponse = await updateCartAPI(token, updatedCart);
+      //console.log("UPDATE CART RESPONSE:", cartResponse);
+      Alert.alert("Success", "Product added to cart.");
+    } catch (error) {
+      Alert.alert("Error", "Could not update cart on server.");
+    }
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Header title="Product Details" />
@@ -69,10 +95,7 @@ export default function ProductDetails({ route, navigation }) {
         </View>
         <View style={styles.buttonRow}>
           <BackButton onPress={() => navigation.goBack()} />
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() => dispatch(addToCart(product))}
-          >
+          <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
             <View style={styles.cartContent}>
               <Ionicons name="cart" size={20} color="white" />
               <Text style={styles.cartText}>Add to Cart</Text>
