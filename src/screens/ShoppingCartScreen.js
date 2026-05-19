@@ -5,15 +5,24 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector, useDispatch } from "react-redux";
-import { increaseQuantity, decreaseQuantity } from "../redux/cartSlice";
+import {
+  increaseQuantity,
+  decreaseQuantity,
+  clearCart,
+} from "../redux/cartSlice";
+import { setOrders } from "../redux/ordersSlice";
+import { createOrderAPI, getOrdersAPI } from "../services/orderApi";
+import { updateCartAPI } from "../services/cartApi";
 import { Ionicons } from "@expo/vector-icons";
 import Header from "../components/Header";
 
 export default function ShoppingCartScreen() {
   const cartItems = useSelector((state) => state.cart.items);
+  const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
   const totalItems = cartItems.reduce((total, item) => {
@@ -23,6 +32,28 @@ export default function ShoppingCartScreen() {
   const totalCost = cartItems.reduce((total, item) => {
     return total + item.price * item.quantity;
   }, 0);
+
+  async function handleCheckout() {
+    try {
+      const response = await createOrderAPI(token, cartItems);
+      if (response.status !== "OK") {
+        Alert.alert("Error", "Could not create order.");
+        return;
+      }
+
+      const ordersData = await getOrdersAPI(token);
+      console.log("ORDERS RESPONSE:", ordersData);
+      if (ordersData.orders) {
+        dispatch(setOrders(ordersData.orders));
+      }
+
+      dispatch(clearCart());
+      await updateCartAPI(token, []);
+      Alert.alert("Success", "Order created successfully.");
+    } catch (error) {
+      Alert.alert("Error", "Checkout failed.");
+    }
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -85,7 +116,10 @@ export default function ShoppingCartScreen() {
         )}
       </View>
       {cartItems.length > 0 && (
-        <TouchableOpacity style={styles.checkoutButton}>
+        <TouchableOpacity
+          style={styles.checkoutButton}
+          onPress={handleCheckout}
+        >
           <View style={styles.checkoutContent}>
             <Ionicons name="bag-check" size={22} color="white" />
             <Text style={styles.checkoutText}>Checkout</Text>

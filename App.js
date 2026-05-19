@@ -11,6 +11,7 @@ import ShoppingCartScreen from "./src/screens/ShoppingCartScreen";
 import AuthScreen from "./src/screens/AuthScreen";
 import UserProfileScreen from "./src/screens/UserProfileScreen";
 import SplashScreen from "./src/screens/SplashScreen";
+import OrdersScreen from "./src/screens/OrdersScreen";
 
 import { Provider, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -45,6 +46,10 @@ function Tabs() {
       Alert.alert("Not Logged in", "You must be logged in to access this tab.");
     }
   }
+  const orders = useSelector((state) => state.orders.orders);
+  const newOrderCount = orders.filter((order) =>{
+    return order.is_paid === 0 && order.is_delivered === 0;
+  }).length;
 
   return (
     <Tab.Navigator
@@ -57,6 +62,10 @@ function Tabs() {
             iconName = "home";
           } else if (route.name === "Shopping Cart") {
             iconName = "cart";
+          } else if (route.name === "My Orders") {
+            iconName = "receipt";
+          } else {
+            iconName = "person";
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -77,6 +86,16 @@ function Tabs() {
         }}
         options={{
           tabBarBadge: totalItems > 0 ? totalItems : undefined,
+        }}
+      />
+      <Tab.Screen
+        name="My Orders"
+        component={OrdersScreen}
+        listeners={{
+          tabPress: protectedTabPress,
+        }}
+        options={{
+          tabBarBadge: newOrderCount > 0 ? newOrderCount : undefined,
         }}
       />
       <Tab.Screen
@@ -106,7 +125,7 @@ export default function App() {
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
-  
+
   return (
     <Provider store={store}>
       <NavigationContainer>
