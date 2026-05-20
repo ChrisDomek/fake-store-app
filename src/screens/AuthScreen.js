@@ -13,6 +13,8 @@ import { signInUser } from "../redux/authSlice";
 import { signInUserAPI, signUpUserAPI } from "../services/authApi";
 import { getCartAPI } from "../services/cartApi";
 import { setCart } from "../redux/cartSlice";
+import { getOrdersAPI } from "../services/orderApi";
+import { setOrders } from "../redux/ordersSlice";
 
 export default function AuthScreen() {
   const dispatch = useDispatch();
@@ -63,15 +65,21 @@ export default function AuthScreen() {
 
       try {
         const cartData = await getCartAPI(data.token);
-
         // console.log("CART RESPONSE:", cartData);
-
         if (cartData.items) {
           dispatch(setCart(cartData.items));
         }
       } catch (cartError) {
         //console.log("Cart fetch failed:", cartError);
         dispatch(setCart([]));
+      }
+      try {
+        const ordersData = await getOrdersAPI(data.token);
+        if (ordersData.orders) {
+          dispatch(setOrders(ordersData.orders));
+        }
+      } catch (ordersError) {
+        dispatch(setOrders([]));
       }
 
       Alert.alert(

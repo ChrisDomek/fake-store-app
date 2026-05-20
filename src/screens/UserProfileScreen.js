@@ -1,18 +1,54 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
-
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Modal,
+  TextInput,
+} from "react-native";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-
-import { signOutUser } from "../redux/authSlice";
+import { signOutUser, updateUser } from "../redux/authSlice";
 import { clearCart } from "../redux/cartSlice";
+import { clearOrders } from "../redux/ordersSlice";
+import { updateUserAPI } from "../services/authApi";
 
 export default function UserProfileScreen() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [updatedName, setUpdatedName] = useState(user?.name || "");
+  const [updatedPassword, setUpdatedPassword] = useState("");
+
   function handleSignOut() {
     dispatch(signOutUser());
     dispatch(clearCart());
+    dispatch(clearOrders());
 
     Alert.alert("Signed Out", "You have been signed out.");
+  }
+
+  async function handleUpdateConfirm() {
+    if (!updatedName || !updatedPassword) {
+      Alert.alert("Error", "Please enter a name and password.");
+      return;
+    }
+    try {
+      const response = await updateUserAPI(token, updatedName, updatedPassword);
+      if (response.status !== "OK") {
+        Alert.alert("Error", response.message || "Could not update profile.");
+        return;
+      }
+      dispatch(updateUser({ name: updatedName }));
+      setModalVisible(false);
+      setUpdatedPassword("");
+
+      Alert.alert("Success", "Profile updated successfully.");
+    } catch (error) {
+      Alert.alert("Error", "Profile update failed.");
+    }
   }
 
   return (
@@ -28,7 +64,10 @@ export default function UserProfileScreen() {
         <Text style={styles.value}>{user?.email}</Text>
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setModalVisible(true)}
+      >
         <Text style={styles.buttonText}>Update</Text>
       </TouchableOpacity>
 
@@ -38,6 +77,45 @@ export default function UserProfileScreen() {
       >
         <Text style={styles.buttonText}>Sign Out</Text>
       </TouchableOpacity>
+      {/* Modal for updating profile - add to component if i have time*/}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalBackground}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Update Profile</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="New name"
+              value={updatedName}
+              onChangeText={setUpdatedName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="New password"
+              secureTextEntry
+              value={updatedPassword}
+              onChangeText={setUpdatedPassword}
+            />
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleUpdateConfirm}
+              >
+                <Text style={styles.buttonText}>Confirm</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => {
+                  setModalVisible(false);
+                  setUpdatedName(user?.name || "");
+                  setUpdatedPassword("");
+                }}
+              >
+                <Text style={styles.buttonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -82,5 +160,46 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalBox: {
+    width: "85%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#000",
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#000",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    backgroundColor: "#429ffc",
+    padding: 12,
+    borderRadius: 8,
+    width: "48%",
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#e74c3c",
   },
 });

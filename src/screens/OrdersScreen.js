@@ -5,16 +5,21 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Header from "../components/Header";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { getProductDetails } from "../services/api";
+import { setOrders } from "../redux/ordersSlice";
+import { getOrdersAPI, updateOrderAPI } from "../services/orderApi";
 
 export default function OrdersScreen() {
   const orders = useSelector((state) => state.orders.orders);
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth.token);
   const [expandedOrderID, setExpandedOrderID] = useState(null);
   const [expandedSection, setExpandedSection] = useState("New Orders");
   const [orderProductDetails, setOrderProductDetails] = useState({});
@@ -71,6 +76,28 @@ export default function OrdersScreen() {
     (order) => order.is_paid === 1 && order.is_delivered === 1,
   );
 
+  async function handleUpdateOrder(orderID, isPaid, isDelivered) {
+    try {
+      const response = await updateOrderAPI(
+        token,
+        orderID,
+        isPaid,
+        isDelivered,
+      );
+      if (response.status !== "OK") {
+        Alert.alert("Error", "Could not update order.");
+        return;
+      }
+      const ordersData = await getOrdersAPI(token);
+      if (ordersData.orders) {
+        dispatch(setOrders(ordersData.orders));
+      }
+      Alert.alert("Success", "Order status updated.");
+    } catch (error) {
+      Alert.alert("Error", "Order update failed.");
+    }
+  }
+
   function renderOrder({ item }) {
     const isExpanded = expandedOrderID === item.id;
     const parsedItems = JSON.parse(item.order_items);
@@ -81,12 +108,21 @@ export default function OrdersScreen() {
           style={styles.orderHeader}
           onPress={() => toggleOrder(item.id, item.order_items)}
         >
-          <View style={styles.orderInfoRow}>
-            <Text style={styles.orderTitle}>Order ID: {item.id}</Text>
-            <Text style={styles.orderInfoText}>Items: {item.item_numbers}</Text>
-            <Text style={styles.orderInfoText}>
-              Total: ${(item.total_price / 100).toFixed(2)}
-            </Text>
+          <View style={styles.orderInfoContainer}>
+            <View style={styles.orderInfoBox}>
+              <Text style={styles.orderLabel}>Order</Text>
+              <Text style={styles.orderValue}>#{item.id}</Text>
+            </View>
+            <View style={styles.orderInfoBox}>
+              <Text style={styles.orderLabel}>Items</Text>
+              <Text style={styles.orderValue}>{item.item_numbers}</Text>
+            </View>
+            <View style={styles.orderInfoBox}>
+              <Text style={styles.orderLabel}>Total</Text>
+              <Text style={styles.orderValue}>
+                ${(item.total_price / 100).toFixed(2)}
+              </Text>
+            </View>
           </View>
           <Ionicons
             name={isExpanded ? "caret-up" : "caret-down"}
@@ -95,8 +131,10 @@ export default function OrdersScreen() {
           />
         </TouchableOpacity>
 
+        {/* Expanded order section */}
         {isExpanded && (
           <View style={styles.expandedSection}>
+            {/* Render every product inside the order */}
             {(orderProductDetails[item.id] || []).map((product, index) => (
               <View key={index} style={styles.expandedItem}>
                 <Image
@@ -107,6 +145,7 @@ export default function OrdersScreen() {
                   <Text style={styles.productTitle} numberOfLines={2}>
                     {product.title}
                   </Text>
+                  {/* Bottom row with price + quantity */}
                   <View style={styles.productBottomRow}>
                     <Text>Price: ${product.price}</Text>
                     <Text>Quantity: {product.quantity}</Text>
@@ -114,6 +153,25 @@ export default function OrdersScreen() {
                 </View>
               </View>
             ))}
+
+            {/* Pay button */}
+            {item.is_paid === 0 && item.is_delivered === 0 && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleUpdateOrder(item.id, true, false)}
+              >
+                <Text style={styles.actionButtonText}>Pay</Text>
+              </TouchableOpacity>
+            )}
+            {/* Receive button */}
+            {item.is_paid === 1 && item.is_delivered === 0 && (
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => handleUpdateOrder(item.id, true, true)}
+              >
+                <Text style={styles.actionButtonText}>Receive</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -226,6 +284,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    backgroundColor: "#4aa3cf",
+    borderWidth: 2,
+    borderColor: "#000",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     marginBottom: 10,
   },
   productImage: {
@@ -256,5 +320,39 @@ const styles = StyleSheet.create({
   orderInfoText: {
     fontSize: 14,
     marginBottom: 20,
+  },
+  orderInfoContainer: {
+    flexDirection: "row",
+    gap: 10,
+    flex: 1,
+  },
+  orderInfoBox: {
+    flex: 1,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
+  orderLabel: {
+    fontSize: 12,
+    color: "#555",
+  },
+  orderValue: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  actionButton: {
+    backgroundColor: "#429ffc",
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#000",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
