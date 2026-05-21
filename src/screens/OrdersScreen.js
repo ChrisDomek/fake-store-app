@@ -92,7 +92,12 @@ export default function OrdersScreen() {
       if (ordersData.orders) {
         dispatch(setOrders(ordersData.orders));
       }
-      Alert.alert("Success", "Order status updated.");
+      if (isPaid && !isDelivered) {
+        Alert.alert("Success", "Payment received.");
+      }
+      if (isPaid && isDelivered) {
+        Alert.alert("Success", "Order received.");
+      }
     } catch (error) {
       Alert.alert("Error", "Order update failed.");
     }
@@ -110,7 +115,7 @@ export default function OrdersScreen() {
         >
           <View style={styles.orderInfoContainer}>
             <View style={styles.orderInfoBox}>
-              <Text style={styles.orderLabel}>Order</Text>
+              <Text style={styles.orderLabel}>Order ID</Text>
               <Text style={styles.orderValue}>#{item.id}</Text>
             </View>
             <View style={styles.orderInfoBox}>
